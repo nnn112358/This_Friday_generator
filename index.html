@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今週のThis Fridayジェネレーター</title>
+  <style>
+    body {
+      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin: 20px 0;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      width: 120px;
+      font-size: 16px;
+    }
+    .tweet-btn {
+      display: inline-block;
+      background-color: #1DA1F2;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    small {
+      display: block;
+      margin-bottom: 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <canvas width="600" height="360" id="canvas"></canvas>
+  <p><small>右クリックで生成した画像を保存できます</small></p>
+  <p>「さーて、今週のThis Friday(予想)は、<br>
+    <input type="text" id="input1" placeholder="Module-***"><br>
+    <input type="text" id="input2" placeholder="Unit-***"><br>
+    <input type="text" id="input3" placeholder="ATOMIC-***"><br>
+    」
+  </p>
+  <a href="https://twitter.com/" target="_blank" class="tweet-btn">ツイートする</a>
+
+<script>
+var canvas;
+var context;
+var template;
+var text1 = "";
+var text2 = "";
+var text3 = "";
+
+var $ = function(e){
+  return document.querySelector(e);
+}
+
+window.addEventListener("load", function(){
+  canvas = $("#canvas");
+  context = canvas.getContext('2d');
+  template = new Image();
+  context.font = "20px 'Hiragino Sans', 'Meiryo', sans-serif";
+  
+  // Parse URL parameters
+  var params = getQuery();
+  if ("text1" in params) text1 = decodeURI(params.text1);
+  if ("text2" in params) text2 = decodeURI(params.text2);
+  if ("text3" in params) text3 = decodeURI(params.text3);
+  
+  // Set input values from URL if available
+  $("#input1").value = text1;
+  $("#input2").value = text2;
+  $("#input3").value = text3;
+  
+  template.src = "./template.png";
+  template.onload = draw;
+  
+  // Fallback if image doesn't load
+  template.onerror = function() {
+    // Draw a placeholder background
+    context.fillStyle = '#f5f5f5';
+    context.fillRect(0, 0, 600, 360);
+    context.fillStyle = '#333';
+    context.font = "32px 'Hiragino Sans', 'Meiryo', sans-serif";
+    context.fillText("テンプレート画像が読み込めませんでした", 100, 180);
+    context.font = "24px 'Hiragino Sans', 'Meiryo', sans-serif";
+    draw();
+  };
+});
+
+// Add event listeners to all three inputs
+$("#input1").addEventListener("input", function(e){
+  text1 = $("#input1").value;
+  draw();
+});
+
+$("#input2").addEventListener("input", function(e){
+  text2 = $("#input2").value;
+  draw();
+});
+
+$("#input3").addEventListener("input", function(e){
+  text3 = $("#input3").value;
+  draw();
+});
+
+var draw = function(){
+  // Clear canvas
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw background image if loaded
+  if (template.complete && template.naturalHeight !== 0) {
+    context.drawImage(template, 0, 0, 600, 360);
+  }
+  
+  // テキスト設定
+  context.fillStyle = '#000';
+  context.font = "24px 'Hiragino Sans', 'Meiryo', sans-serif";
+  
+  // 開始位置を設定
+  var x = 150;
+  var y = 200;
+  var lineHeight = 50; // 行間
+  
+  // 各テキストを個別に縦に並べて描画
+  if (text1) context.fillText(text1, x, y);
+  if (text2) context.fillText(text2, x, y + lineHeight);
+  if (text3) context.fillText(text3, x, y + lineHeight * 2);
+  
+  // Update URL with parameters
+  updateURL();
+  
+  // Update tweet link
+  makeURL();
+}
+
+var getQuery = function(){
+  var vars = {}, max = 0, hash = "", array = "";
+  var url = window.location.search;
+  hash = url.slice(1).split('&');
+  max = hash.length;
+  for (var i = 0; i < max; i++) {
+    if (hash[i] === "") continue;
+    array = hash[i].split('=');
+    vars[array[0]] = array[1];
+  }
+  return vars;
+}
+
+var updateURL = function() {
+  var params = [];
+  if (text1) params.push('text1=' + encodeURIComponent(text1));
+  if (text2) params.push('text2=' + encodeURIComponent(text2));
+  if (text3) params.push('text3=' + encodeURIComponent(text3));
+  
+  var newUrl = '/huniki_generator/';
+  if (params.length > 0) {
+    newUrl += '?' + params.join('&');
+  }
+  
+  history.replaceState(null, null, newUrl);
+}
+
+var makeURL = function(){
+  var base = "https://twitter.com/intent/tweet?text=「さーて、今週のThis Fridayは、";
+  var fullText = text1 + " " + text2 + " " + text3;
+  $("a").setAttribute("href", base + fullText + " #M5Stack」" + "&url=" + encodeURIComponent(location.href));
+}
+</script>
+</body>
+</html>

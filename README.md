@@ -1,1 +1,2 @@
-# This_Friday_generator
+# さーて今週のXXXは？
+
